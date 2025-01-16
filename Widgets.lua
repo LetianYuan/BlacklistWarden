@@ -415,8 +415,14 @@ function BlacklistWarden:CreateListFrame()
         if nameBox:GetText() == "" or realmBox:GetText() == "" then
             print("|cffFFFF00Blacklist Warden:|r Name or realm missing.")
         else
-            BlacklistWarden:SavePlayerInfoValue("playerName", nameBox:GetText():match( "^%s*(.-)%s*$" ))
-            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBox:GetText():match( "^%s*(.-)%s*$" ))
+            local nameBoxString=nameBox:GetText():lower()
+            nameBoxString= nameBoxString:sub(1, 1):upper() .. nameBoxString:sub(2)
+
+            local realmBoxString=realmBox:GetText():lower()
+            realmBoxString= realmBoxString:sub(1, 1):upper() .. realmBoxString:sub(2)
+
+            BlacklistWarden:SavePlayerInfoValue("playerName", nameBoxString:match( "^%s*(.-)%s*$" ))
+            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBoxString:match( "^%s*(.-)%s*$" ))
             BlacklistWarden:SavePlayerInfoValue("notes", notesBox:GetText())
             BlacklistWarden:WritePlayerToDisk()
             nameBox:SetText("")
@@ -566,7 +572,7 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                 end
             elseif sortBy == 5 then
                 local firstHalfa, secondHalfa = strsplit(" ",
-                    BlacklistWarden.db.global.blacklistedPlayers[a.name:GetText() .. "-" .. a.server:GetText()]
+                    BlacklistWarden.db.global.blacklistedPlayers[a.name:GetText():lower() .. "-" .. a.server:GetText():lower()]
                     ["date"])
                 local amonth, aday, ayear = strsplit("/", firstHalfa)
                 local ahour, amin, asec = strsplit(":", secondHalfa)
@@ -579,7 +585,7 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                     sec = asec
                 }
                 local firstHalfb, secondHalfb = strsplit(" ",
-                    BlacklistWarden.db.global.blacklistedPlayers[b.name:GetText() .. "-" .. b.server:GetText()]
+                    BlacklistWarden.db.global.blacklistedPlayers[b.name:GetText():lower() .. "-" .. b.server:GetText():lower()]
                     ["date"])
                 local bmonth, bday, byear = strsplit("/", firstHalfb)
                 local bhour, bmin, bsec = strsplit(":", secondHalfb)

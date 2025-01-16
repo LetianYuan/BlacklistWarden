@@ -113,6 +113,7 @@ local options = {
 local defaults = {
     global = {
         blacklistedPlayers = {},
+        dataCleanup = false,
         previousGroupSize = 0,
         blacklistPopupWindowOptions = {
             "All",
@@ -187,6 +188,31 @@ function BlacklistWarden:OnInitialize()
     icon:Register("BlacklistWarden", LDB, BlacklistWarden.db.profile.minimap)
 end
 
+function BlacklistWarden:ConverTableToLower()
+    -- Temporary table to store modified keys
+    local tempTable = {}
+
+    -- Collect keys that need to be changed
+    for key, value in pairs(BlacklistWarden.db.global
+        .blacklistedPlayers) do
+        tempTable[key:lower()] = value
+    end
+
+    -- Clear the original table and add the modified keys
+    for key in pairs(BlacklistWarden.db.global.blacklistedPlayers) do
+        BlacklistWarden.db.global.blacklistedPlayers[key] = nil
+    end
+
+    for key, value in pairs(tempTable) do
+        BlacklistWarden.db.global.blacklistedPlayers[key] = value
+    end
+
+    -- Print the modified original table to verify the changes
+    for key, value in pairs(BlacklistWarden.db.global.blacklistedPlayers) do
+      print(key, value)
+     end
+end
+
 -- Create and store widgets
 function BlacklistWarden:OnEnable()
     blacklistPopupWindow = BlacklistWarden:CreateBlacklistPopupWindow();
@@ -196,6 +222,10 @@ function BlacklistWarden:OnEnable()
     blacklistPopupWarning:SetMovable(not BlacklistWarden.db.profile.lockWindows)
     blacklistListWindow:SetMovable(not BlacklistWarden.db.profile.lockWindows)
     BlacklistWarden.db.global.previousGroupSize = GetNumGroupMembers()
+    if (not BlacklistWarden.db.global.dataCleanup) then
+        BlacklistWarden:ConverTableToLower()
+        BlacklistWarden.db.global.dataCleanup=true
+    end
 end
 
 -- Temporary player info to store
@@ -225,7 +255,7 @@ function BlacklistWarden:CheckPlayersOnGroupUpdate()
                 if BlacklistWarden:IsPlayerInList(fullname) then
                     if blacklistPopupWarning then
                         blacklistPopupWarning.setPlayerData(BlacklistWarden.db.global
-                            .blacklistedPlayers[fullname])
+                            .blacklistedPlayers[fullname:lower()])
                         blacklistPopupWarning:Show()
                     end
                 end
@@ -327,7 +357,8 @@ end
 -- Stores the temporary player info in the database
 function BlacklistWarden:WritePlayerToDisk()
     local date = date("%m/%d/%Y %H:%M:%S")
-    local playerName = playerInfo["playerName"] .. "-" .. playerInfo["playerServer"]
+    local playerName = playerInfo["playerName"]:lower() .. "-" .. playerInfo["playerServer"]:lower()
+    local playerNameString = playerInfo["playerName"] .. "-" .. playerInfo["playerServer"]
     local player = BlacklistWarden.db.global.blacklistedPlayers[playerName]
     if player ~= nil then
         date = player["date"]
@@ -341,13 +372,13 @@ function BlacklistWarden:WritePlayerToDisk()
         ["date"] = date,
     }
     if not player then
-        print("|cffFF0000" .. playerName .. "|r added to blacklist.")
+        print("|cffFF0000" .. playerNameString .. "|r added to blacklist.")
         if blacklistListWindow then
             blacklistListWindow.addEntry(BlacklistWarden.db.global.blacklistedPlayers
                 [playerName])
         end
     else
-        print("|cffFF0000" .. playerName .. "|r successfully modified.")
+        print("|cffFF0000" .. playerNameString .. "|r successfully modified.")
         if blacklistListWindow then
             blacklistListWindow.updateEntry(BlacklistWarden.db.global.blacklistedPlayers
                 [playerName])
@@ -384,6 +415,7 @@ end
 
 -- Edit player entry from the list window
 function BlacklistWarden:EditEntry(playername)
+    playername = playername:lower()
     local player = BlacklistWarden.db.global.blacklistedPlayers[playername]
     playerInfo = {
         ["playerName"] = player["name"],
@@ -413,15 +445,17 @@ end
 
 -- Remove player from blacklist
 function BlacklistWarden:RemovePlayer(name)
+    local stringName = name
+    name = name:lower()
     if not BlacklistWarden.db.global.blacklistedPlayers then BlacklistWarden.db.global.blacklistedPlayers = {} end
     blacklistListWindow.removeEntry(BlacklistWarden.db.global.blacklistedPlayers[name])
     BlacklistWarden.db.global.blacklistedPlayers[name] = nil;
-    print("|cFF00FF00" .. name .. "|r removed from blacklist.")
+    print("|cFF00FF00" .. stringName .. "|r removed from blacklist.")
 end
 
 --check if player is on blacklist
 function BlacklistWarden:IsPlayerInList(name)
-    if not BlacklistWarden.db.global.blacklistedPlayers or not BlacklistWarden.db.global.blacklistedPlayers[name] then
+    if not BlacklistWarden.db.global.blacklistedPlayers or not BlacklistWarden.db.global.blacklistedPlayers[name:lower()] then
         return false
     else
         return true
@@ -451,7 +485,7 @@ do
             if not realm then realm = GetRealmName() end
             local fullname = name .. "-" .. realm;
             if not BlacklistWarden:IsPlayerInList(fullname) then return end
-            local player = BlacklistWarden.db.global.blacklistedPlayers[fullname]
+            local player = BlacklistWarden.db.global.blacklistedPlayers[fullname:lower()]
 
             AddToTooltip(tooltip, player);
         end
@@ -466,7 +500,7 @@ do
             if not realm then realm = GetRealmName() end
             local fullname = name .. "-" .. realm
             if not BlacklistWarden:IsPlayerInList(fullname) then return end
-            local player = BlacklistWarden.db.global.blacklistedPlayers[fullname]
+            local player = BlacklistWarden.db.global.blacklistedPlayers[fullname:lower()]
 
             AddToTooltip(tooltip, player)
         end
@@ -494,7 +528,7 @@ do
                 local name, realm = BlacklistWarden:FormatName(fullName)
                 fullName = name .. "-" .. realm;
                 if not BlacklistWarden:IsPlayerInList(fullName) then return end
-                local player = BlacklistWarden.db.global.blacklistedPlayers[fullName]
+                local player = BlacklistWarden.db.global.blacklistedPlayers[fullName:lower()]
                 --GameTooltip:SetPoint("TOPLEFT", self, "TOPRIGHT", 0, 0)
                 AddToTooltip(GameTooltip, player)
                 GameTooltip:Show()
