@@ -98,12 +98,12 @@ local options = {
             name = "\n\n\n\n",
         },
         headerCredits = {
-            order = 9,
+            order = 11,
             type = "header",
             name = "Credits",
         },
         creditsDescription = {
-            order = 10,
+            order = 12,
             type = "description",
             name = "|cffF58CBADiuxtros|r @ Icecrown (US) - |cffFF8000Author|r",
         },
@@ -113,7 +113,7 @@ local options = {
 local defaults = {
     global = {
         blacklistedPlayers = {},
-        dataCleanup = false,
+        dataCleanupV1 = false,
         previousGroupSize = 0,
         blacklistPopupWindowOptions = {
             "All",
@@ -193,8 +193,7 @@ function BlacklistWarden:ConverTableToLower()
     local tempTable = {}
 
     -- Collect keys that need to be changed
-    for key, value in pairs(BlacklistWarden.db.global
-        .blacklistedPlayers) do
+    for key, value in pairs(BlacklistWarden.db.global.blacklistedPlayers) do
         tempTable[key:lower()] = value
     end
 
@@ -205,12 +204,15 @@ function BlacklistWarden:ConverTableToLower()
 
     for key, value in pairs(tempTable) do
         BlacklistWarden.db.global.blacklistedPlayers[key] = value
+        if BlacklistWarden.db.global.blacklistedPlayers[key]["muted"]==nil then 
+            BlacklistWarden.db.global.blacklistedPlayers[key]["muted"]=true
+        end
     end
 
     -- Print the modified original table to verify the changes
-    for key, value in pairs(BlacklistWarden.db.global.blacklistedPlayers) do
-      print(key, value)
-     end
+   -- for key, value in pairs(BlacklistWarden.db.global.blacklistedPlayers) do
+    --    print(key, value)
+   -- end
 end
 
 -- Create and store widgets
@@ -222,9 +224,9 @@ function BlacklistWarden:OnEnable()
     blacklistPopupWarning:SetMovable(not BlacklistWarden.db.profile.lockWindows)
     blacklistListWindow:SetMovable(not BlacklistWarden.db.profile.lockWindows)
     BlacklistWarden.db.global.previousGroupSize = GetNumGroupMembers()
-    if (not BlacklistWarden.db.global.dataCleanup) then
+    if (not BlacklistWarden.db.global.dataCleanupV1) then
         BlacklistWarden:ConverTableToLower()
-        BlacklistWarden.db.global.dataCleanup=true
+        BlacklistWarden.db.global.dataCleanupV1 = true
     end
 end
 
@@ -370,6 +372,7 @@ function BlacklistWarden:WritePlayerToDisk()
         ["reason"] = playerInfo["reason"],
         ["notes"] = playerInfo["notes"],
         ["date"] = date,
+        ["muted"]=playerInfo["muted"]
     }
     if not player then
         print("|cffFF0000" .. playerNameString .. "|r added to blacklist.")
@@ -403,12 +406,14 @@ function BlacklistWarden:BlacklistButton()
             BlacklistWarden:SavePlayerInfoValue("reason",
                 BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
             blacklistPopupWindow.editbox:SetText("")
+            blacklistPopupWindow.checkbox:SetValue(true)
             blacklistPopupWindow:Show()
         end
     else
         BlacklistWarden:SavePlayerInfoValue("reason",
             BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
         BlacklistWarden:SavePlayerInfoValue("notes", "")
+        BlacklistWarden:SavePlayerInfoValue("muted", true)
         BlacklistWarden:WritePlayerToDisk();
     end
 end
@@ -432,6 +437,7 @@ function BlacklistWarden:EditEntry(playername)
         end
     end
     blacklistPopupWindow.editbox:SetText(player["notes"])
+    blacklistPopupWindow.checkbox:SetValue(player["muted"])
     BlacklistWarden:TogglePopupWindow(true)
 end
 
@@ -704,3 +710,20 @@ do
         self.enabled = true
     end
 end
+
+local function FilterChat(self, event, msg, author, ...)
+    if author ~= nil and BlacklistWarden:IsPlayerInList(author) and BlacklistWarden.db.global.blacklistedPlayers[author:lower()]["muted"]==true then
+        return true;
+    else
+        return false;
+    end
+end
+
+ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD", FilterChat)
+ChatFrame_AddMessageEventFilter("CHAT_MSG_INSTANCE", FilterChat)

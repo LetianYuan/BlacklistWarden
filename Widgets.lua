@@ -188,6 +188,7 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     savebutton:SetCallback("OnClick",
         function(this)
             BlacklistWarden:SavePlayerInfoValue("notes", container.editbox:GetText())
+            BlacklistWarden:SavePlayerInfoValue("muted", container.checkbox:GetValue())
             BlacklistWarden:WritePlayerToDisk()
             this.frame:GetParent():Hide()
         end)
@@ -235,7 +236,7 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     local drop = {}
     drop = AceGUI:Create("Dropdown")
     drop:SetList(BlacklistWarden.db.global.blacklistPopupWindowOptions)
-    drop:SetWidth(208)
+    drop:SetWidth(157)
     drop:SetValue(1)
     drop:SetLabel("Reason:")
     drop:SetCallback("OnValueChanged", function(this, event, item)
@@ -246,8 +247,21 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     drop.frame:SetParent(container)
     drop.frame:Show()
     drop.frame:SetPoint("LEFT", container, "TOPLEFT", 20, -52)
-
     container.dropdown = drop;
+
+    local muteLabel = container:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    muteLabel:SetPoint("LEFT", drop.frame, "RIGHT", 20, 10)
+    --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
+    muteLabel:SetText("Mute?")
+
+    local checkbox = {}
+    checkbox = AceGUI:Create("CheckBox")
+    checkbox:SetType("checkbox")
+    checkbox.frame:SetParent(container)
+    checkbox.frame:Show()
+    checkbox.frame:SetPoint("LEFT", drop.frame, "RIGHT", 20, -10)
+    container.checkbox = checkbox
+
     local noteLabel = container:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     noteLabel:SetPoint("LEFT", drop.frame, "LEFT", 0, -30)
     --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
@@ -292,7 +306,7 @@ local lastSortID            = 1;
 
 -- Creates window to list all the blacklisted players
 function BlacklistWarden:CreateListFrame()
-    local container = BlacklistWarden:CreateMainFrame("ListWindow", 800, 500)
+    local container = BlacklistWarden:CreateMainFrame("ListWindow", 860, 500)
     local frameConfig = BlacklistWarden.db.profile.listFrame
     BlacklistWarden:HandleFrameConfig(container, frameConfig)
     columnCount   = 0
@@ -337,6 +351,7 @@ function BlacklistWarden:CreateListFrame()
     BlacklistWarden:CreateColumnHeader("Class", scrollFrame, 110, "scroll", scrollChild)
     BlacklistWarden:CreateColumnHeader("Reason", scrollFrame, 80, "scroll", scrollChild)
     BlacklistWarden:CreateColumnHeader("Date Added", scrollFrame, 90, "scroll", scrollChild)
+    BlacklistWarden:CreateColumnHeader("Muted?", scrollFrame, 60, "scroll", scrollChild)
     BlacklistWarden:CreateColumnHeader("Notes", scrollFrame, 288, "scroll", scrollChild)
 
     --BlacklistWarden:CreateTableButton(scrollcontainer.frame,1);
@@ -344,8 +359,9 @@ function BlacklistWarden:CreateListFrame()
     local addFrame = AceGUI:Create("InlineGroup")
     addFrame.frame:SetParent(tabgroup.frame)
     addFrame.frame:SetPoint("TOPLEFT", tabgroup.frame, "TOPLEFT", 10, -50)
-    addFrame.frame:SetPoint("BOTTOMRIGHT", tabgroup.frame, "BOTTOMRIGHT", -10, 100)
+    addFrame.frame:SetPoint("BOTTOMRIGHT", tabgroup.frame, "BOTTOMRIGHT", -10, 60)
     addFrame:SetTitle("Add to blacklist: ")
+
 
     local nameBox = AceGUI:Create("EditBox")
     nameBox:SetLabel("Name:")
@@ -415,14 +431,14 @@ function BlacklistWarden:CreateListFrame()
         if nameBox:GetText() == "" or realmBox:GetText() == "" then
             print("|cffFFFF00Blacklist Warden:|r Name or realm missing.")
         else
-            local nameBoxString=nameBox:GetText():lower()
-            nameBoxString= nameBoxString:sub(1, 1):upper() .. nameBoxString:sub(2)
+            local nameBoxString = nameBox:GetText():lower()
+            nameBoxString = nameBoxString:sub(1, 1):upper() .. nameBoxString:sub(2)
 
-            local realmBoxString=realmBox:GetText():lower()
-            realmBoxString= realmBoxString:sub(1, 1):upper() .. realmBoxString:sub(2)
+            local realmBoxString = realmBox:GetText():lower()
+            realmBoxString = realmBoxString:sub(1, 1):upper() .. realmBoxString:sub(2)
 
-            BlacklistWarden:SavePlayerInfoValue("playerName", nameBoxString:match( "^%s*(.-)%s*$" ))
-            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBoxString:match( "^%s*(.-)%s*$" ))
+            BlacklistWarden:SavePlayerInfoValue("playerName", nameBoxString:match("^%s*(.-)%s*$"))
+            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBoxString:match("^%s*(.-)%s*$"))
             BlacklistWarden:SavePlayerInfoValue("notes", notesBox:GetText())
             BlacklistWarden:WritePlayerToDisk()
             nameBox:SetText("")
@@ -433,9 +449,24 @@ function BlacklistWarden:CreateListFrame()
                 BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
             classDropdown:SetValue("DEATHKNIGHT")
             BlacklistWarden:SavePlayerInfoValue("playerClass",
-            "DEATHKNIGHT")
+                "DEATHKNIGHT")
         end
     end
+
+
+    local muteLabel = notesBox.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    muteLabel:SetPoint("BOTTOMLEFT", notesBox.frame, "BOTTOMLEFT", 0, -15)
+    --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
+    muteLabel:SetText("Mute?")
+
+    local checkbox = {}
+    checkbox = AceGUI:Create("CheckBox")
+    checkbox:SetType("checkbox")
+    checkbox:SetValue(true)
+    checkbox.frame:SetParent(addFrame.frame)
+    checkbox.frame:Show()
+    checkbox.frame:SetPoint("BOTTOMLEFT", notesBox.frame, "BOTTOMLEFT", 0, -38)
+    container.checkbox = checkbox
 
     local addButton = BlacklistWarden:CreateStandardButton("Add", 100, addFrame.frame)
     addButton.frame:SetPoint("BOTTOMLEFT", addFrame.frame, "BOTTOMLEFT", 30, 30)
@@ -455,7 +486,7 @@ function BlacklistWarden:CreateListFrame()
                 BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
             classDropdown:SetValue("DEATHKNIGHT")
             BlacklistWarden:SavePlayerInfoValue("playerClass",
-            "DEATHKNIGHT")
+                "DEATHKNIGHT")
         end
     end
     tabgroup:SetCallback("OnGroupSelected", SelectGroup)
@@ -491,7 +522,12 @@ function BlacklistWarden:CreateListFrame()
         for i = 1, #FilteredScrollButtons do
             if FilteredScrollButtons[i].name:GetText() == player["name"] and FilteredScrollButtons[i].server:GetText() == player["server"] then
                 FilteredScrollButtons[i].reason:SetText(player["reason"])
-                FilteredScrollButtons[i].notes:SetText(player["notes"])
+                if player["notes"] and player["notes"] ~= "" then
+                    FilteredScrollButtons[i].notes:SetText(player["notes"])
+                else
+                    FilteredScrollButtons[i].notes:SetText(" ")
+                end
+                FilteredScrollButtons[i].muted:SetText(player["muted"] and "Yes" or "No")
                 break
             end
         end
@@ -572,7 +608,8 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                 end
             elseif sortBy == 5 then
                 local firstHalfa, secondHalfa = strsplit(" ",
-                    BlacklistWarden.db.global.blacklistedPlayers[a.name:GetText():lower() .. "-" .. a.server:GetText():lower()]
+                    BlacklistWarden.db.global.blacklistedPlayers
+                    [a.name:GetText():lower() .. "-" .. a.server:GetText():lower()]
                     ["date"])
                 local amonth, aday, ayear = strsplit("/", firstHalfa)
                 local ahour, amin, asec = strsplit(":", secondHalfa)
@@ -585,7 +622,8 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                     sec = asec
                 }
                 local firstHalfb, secondHalfb = strsplit(" ",
-                    BlacklistWarden.db.global.blacklistedPlayers[b.name:GetText():lower() .. "-" .. b.server:GetText():lower()]
+                    BlacklistWarden.db.global.blacklistedPlayers
+                    [b.name:GetText():lower() .. "-" .. b.server:GetText():lower()]
                     ["date"])
                 local bmonth, bday, byear = strsplit("/", firstHalfb)
                 local bhour, bmin, bsec = strsplit(":", secondHalfb)
@@ -606,6 +644,12 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                     return bdate < adate
                 end
             elseif sortBy == 6 then
+                if not lastSort then
+                    return string.lower(a.muted:GetText()) < string.lower(b.muted:GetText())
+                else
+                    return string.lower(b.muted:GetText()) < string.lower(a.muted:GetText())
+                end
+            elseif sortBy == 7 then
                 if not lastSort then
                     return string.lower(a.notes:GetText()) < string.lower(b.notes:GetText())
                 else
@@ -690,9 +734,21 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     local date, time = strsplit(" ", player["date"])
     FilteredScrollButtons[index].date:SetText(date)
 
+    FilteredScrollButtons[index].muted = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
+        "GameFontNormal")
+    FilteredScrollButtons[index].muted:SetPoint("LEFT", FilteredScrollButtons[index].date, "RIGHT", 10, 0)
+    FilteredScrollButtons[index].muted:SetWidth(50)
+    FilteredScrollButtons[index].muted:SetJustifyH("LEFT")
+    FilteredScrollButtons[index].muted:SetMaxLines(1)
+    if player["muted"] == true then
+        FilteredScrollButtons[index].muted:SetText("Yes")
+    else
+        FilteredScrollButtons[index].muted:SetText("No")
+    end
+
     FilteredScrollButtons[index].notes = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontHighlight")
-    FilteredScrollButtons[index].notes:SetPoint("LEFT", FilteredScrollButtons[index].date, "RIGHT", 10, 0)
+    FilteredScrollButtons[index].notes:SetPoint("LEFT", FilteredScrollButtons[index].muted, "RIGHT", 10, 0)
     FilteredScrollButtons[index].notes:SetWidth(250)
     FilteredScrollButtons[index].notes:SetJustifyH("LEFT")
     FilteredScrollButtons[index].notes:SetMaxLines(1)
