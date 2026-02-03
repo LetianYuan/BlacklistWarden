@@ -12,7 +12,7 @@ local blacklistPopupWindow = nil;
 local blacklistPopupWarning = nil;
 local blacklistListWindow = nil;
 -- Minimap button setup
-local LDB = LibStub("LibDataBroker-1.1"):NewDataObject("BlacklistWarden", {
+local LDB = LibStub("LibDataBroker-1.1"):NewDataObject(addon.addonName, {
     type = "data source",
     text = "PPB",
     icon = "Interface\\Icons\\Spell_Mage_Evanesce",
@@ -25,7 +25,7 @@ local LDB = LibStub("LibDataBroker-1.1"):NewDataObject("BlacklistWarden", {
     end,
     OnClick = function(frame, button)
         if button == "RightButton" then
-            Settings.OpenToCategory("BlacklistWarden")
+            Settings.OpenToCategory(BlacklistWarden.optionsId)
         elseif button == "LeftButton" then
             if blacklistListWindow then blacklistListWindow:Show() end
         end
@@ -35,7 +35,7 @@ local LDB = LibStub("LibDataBroker-1.1"):NewDataObject("BlacklistWarden", {
 
 -- Settings options
 local options = {
-    name = "Blacklist Warden",
+    name = addon.addonTitle,
     handler = BlacklistWarden,
     type = 'group',
     args = {
@@ -183,7 +183,7 @@ function BlacklistWarden:OnInitialize()
     self:RegisterChatCommand("blw", "SlashCommand")
     self.db = LibStub("AceDB-3.0"):New("BlacklistWardenDB", defaults)
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addon.addonName, options)
-    self.optionsFrame = aceDialog:AddToBlizOptions(addon.addonName, addon.addonName)
+    self.optionsFrame, self.optionsId = aceDialog:AddToBlizOptions(addon.addonName, addon.addonName)
     self:RegisterEvent("GROUP_ROSTER_UPDATE", "CheckPlayersOnGroupUpdate");
     icon:Register("BlacklistWarden", LDB, BlacklistWarden.db.profile.minimap)
 end
@@ -288,7 +288,7 @@ function BlacklistWarden:SlashCommand(msg)
         print("|cffFFFF00/blw settings -|r Opens the settings window")
         print("|cffFFFF00/blw list -|r Opens the list window")
     elseif string.lower(msg:trim()) == "settings" then
-        Settings.OpenToCategory("BlacklistWarden")
+        Settings.OpenToCategory(BlacklistWarden.optionsId)
     elseif string.lower(msg:trim()) == "list" then
         if blacklistListWindow then blacklistListWindow:Show() end
     end

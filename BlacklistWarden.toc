@@ -6,6 +6,7 @@
 ## OptionalDeps: Ace3, LibDeformat-3.0, lib-st, LibDataBroker-1.1, LibDBIcon-1.0
 ## X-Embeds: Ace3
 ## X-Category: Interface Enhancements
+## Category: Chat & Communication
 ## SavedVariables: BlacklistWardenDB
 ## IconTexture: Interface\Icons\Spell_Mage_Evanesce
 embeds.xml
