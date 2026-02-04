@@ -486,6 +486,9 @@ do
         if tooltip ~= GameTooltip then return end
 
         local _, unit = tooltip:GetUnit()
+
+        if(issecretvalue(unit))then return end
+
         if unit and UnitIsPlayer(unit) and not UnitIsUnit(unit, "player") then
             local name, realm = UnitName(unit)
             if not realm then realm = GetRealmName() end
