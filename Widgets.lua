@@ -37,6 +37,492 @@ local className = {
     ["EVOKER"] = "Evoker",
 }
 
+-- Color palette 
+local Colors = {
+    panelBg      = { 0.05, 0.05, 0.08, 0.96 },
+    panelBorder  = { 0.80, 0.65, 0.22, 1 },
+    headerBg     = { 0.09, 0.09, 0.12, 1 },
+    inputBg      = { 0.03, 0.03, 0.05, 0.9 },
+    tabGroupBg   = { 0.05, 0.05, 0.08, 0.4  },
+    accent       = { 0.90, 0.75, 0.35, 1 },
+    accentDim    = { 0.80, 0.65, 0.22, 0.55 },
+    text         = { 0.92, 0.92, 0.95, 1 },
+    textDim      = { 0.68, 0.68, 0.72, 1 },
+    danger       = { 0.92, 0.38, 0.38, 1 },
+    success      = { 0.36, 0.80, 0.58, 1 },
+    rowBaseA     = { 1, 1, 1, 0.015 },
+    rowBaseB     = { 0, 0, 0, 0.10 },
+    rowHighlight = { 0.90, 0.75, 0.35, 0.10 },
+}
+
+-- Hides a button's default art.
+local function StripButtonArt(frame)
+    local normalTex = frame.GetNormalTexture and frame:GetNormalTexture()
+    if normalTex then
+        normalTex:SetTexture(nil)
+        normalTex:SetAlpha(0)
+    end
+    local pushedTex = frame.GetPushedTexture and frame:GetPushedTexture()
+    if pushedTex then
+        pushedTex:SetTexture(nil)
+        pushedTex:SetAlpha(0)
+    end
+    local disabledTex = frame.GetDisabledTexture and frame:GetDisabledTexture()
+    if disabledTex then
+        disabledTex:SetTexture(nil)
+        disabledTex:SetAlpha(0)
+    end
+
+    local function StripRegionsOf(owner)
+        for _, region in ipairs({ owner:GetRegions() }) do
+            if region.GetObjectType and region:GetObjectType() == "Texture" and region ~= normalTex
+                and region ~= pushedTex and region ~= disabledTex and region.flatSkinPart == nil then
+                region:SetTexture(nil)
+            end
+        end
+    end
+
+    StripRegionsOf(frame)
+    for _, child in ipairs({ frame:GetChildren() }) do
+        StripRegionsOf(child)
+    end
+end
+
+-- Strips the legacy grey 3-slice Blizzard button art from an AceGUI 
+function BlacklistWarden:SkinFlatButton(button)
+    if button.skinned then return end
+    button.skinned = true
+
+    local frame = button.frame
+
+    StripButtonArt(frame)
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0, function() StripButtonArt(frame) end)
+    end
+    frame:HookScript("OnShow", function() StripButtonArt(frame) end)
+    frame:HookScript("OnMouseDown", function() StripButtonArt(frame) end)
+    frame:HookScript("OnMouseUp", function() StripButtonArt(frame) end)
+    frame:HookScript("OnClick", function() StripButtonArt(frame) end)
+
+    local bg = frame:CreateTexture(nil, "BACKGROUND")
+    bg:SetPoint("TOPLEFT", 1, -1)
+    bg:SetPoint("BOTTOMRIGHT", -1, 1)
+    bg:SetColorTexture(unpack(Colors.headerBg))
+    bg.flatSkinPart = true
+    button.skinBg = bg
+
+    local top = frame:CreateTexture(nil, "BORDER")
+    top:SetColorTexture(unpack(Colors.accentDim))
+    top:SetPoint("TOPLEFT")
+    top:SetPoint("TOPRIGHT")
+    top:SetHeight(1)
+    top.flatSkinPart = true
+
+    local bottom = frame:CreateTexture(nil, "BORDER")
+    bottom:SetColorTexture(unpack(Colors.accentDim))
+    bottom:SetPoint("BOTTOMLEFT")
+    bottom:SetPoint("BOTTOMRIGHT")
+    bottom:SetHeight(1)
+    bottom.flatSkinPart = true
+
+    local left = frame:CreateTexture(nil, "BORDER")
+    left:SetColorTexture(unpack(Colors.accentDim))
+    left:SetPoint("TOPLEFT")
+    left:SetPoint("BOTTOMLEFT")
+    left:SetWidth(1)
+    left.flatSkinPart = true
+
+    local right = frame:CreateTexture(nil, "BORDER")
+    right:SetColorTexture(unpack(Colors.accentDim))
+    right:SetPoint("TOPRIGHT")
+    right:SetPoint("BOTTOMRIGHT")
+    right:SetWidth(1)
+    right.flatSkinPart = true
+
+    frame:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    local highlight = frame:GetHighlightTexture()
+    if highlight then
+        highlight:SetVertexColor(unpack(Colors.rowHighlight))
+        highlight:ClearAllPoints()
+        highlight:SetPoint("TOPLEFT", 1, -1)
+        highlight:SetPoint("BOTTOMRIGHT", -1, 1)
+        highlight.flatSkinPart = true
+    end
+
+    frame:HookScript("OnMouseDown", function()
+        bg:SetColorTexture(0.03, 0.03, 0.05, 1)
+    end)
+    frame:HookScript("OnMouseUp", function()
+        bg:SetColorTexture(unpack(Colors.headerBg))
+    end)
+
+    if button.text then
+        button.text:SetTextColor(unpack(Colors.text))
+    end
+end
+
+-- Strips the legacy stone-textured checkbox art from an AceGUI
+function BlacklistWarden:SkinFlatCheckbox(checkbox, boxSize)
+    if checkbox.skinned then return end
+    checkbox.skinned = true
+    boxSize = boxSize or 24
+
+    local frame = checkbox.frame
+    local checkbg = checkbox.checkbg
+    local check = checkbox.check
+
+    if checkbg then
+        checkbg:SetTexture(nil)
+        checkbg:SetColorTexture(unpack(Colors.inputBg))
+        checkbg:SetSize(boxSize, boxSize)
+
+        local top = frame:CreateTexture(nil, "ARTWORK", nil, 1)
+        top:SetColorTexture(unpack(Colors.accentDim))
+        top:SetPoint("TOPLEFT", checkbg, "TOPLEFT")
+        top:SetPoint("TOPRIGHT", checkbg, "TOPRIGHT")
+        top:SetHeight(1)
+
+        local bottom = frame:CreateTexture(nil, "ARTWORK", nil, 1)
+        bottom:SetColorTexture(unpack(Colors.accentDim))
+        bottom:SetPoint("BOTTOMLEFT", checkbg, "BOTTOMLEFT")
+        bottom:SetPoint("BOTTOMRIGHT", checkbg, "BOTTOMRIGHT")
+        bottom:SetHeight(1)
+
+        local left = frame:CreateTexture(nil, "ARTWORK", nil, 1)
+        left:SetColorTexture(unpack(Colors.accentDim))
+        left:SetPoint("TOPLEFT", checkbg, "TOPLEFT")
+        left:SetPoint("BOTTOMLEFT", checkbg, "BOTTOMLEFT")
+        left:SetWidth(1)
+
+        local right = frame:CreateTexture(nil, "ARTWORK", nil, 1)
+        right:SetColorTexture(unpack(Colors.accentDim))
+        right:SetPoint("TOPRIGHT", checkbg, "TOPRIGHT")
+        right:SetPoint("BOTTOMRIGHT", checkbg, "BOTTOMRIGHT")
+        right:SetWidth(1)
+    end
+
+    if check then
+        local inset = boxSize >= 18 and 3 or 2
+        check:SetTexture(nil)
+        check:SetColorTexture(unpack(Colors.accent))
+        check:ClearAllPoints()
+        check:SetPoint("TOPLEFT", checkbg, "TOPLEFT", inset, -inset)
+        check:SetPoint("BOTTOMRIGHT", checkbg, "BOTTOMRIGHT", -inset, inset)
+    end
+
+    if checkbox.highlight then
+        checkbox.highlight:SetTexture(nil)
+        checkbox.highlight:SetColorTexture(unpack(Colors.rowHighlight))
+    end
+
+    if checkbox.text then
+        checkbox.text:SetTextColor(unpack(Colors.text))
+    end
+
+    if frame then
+        frame:SetHeight(math.max(boxSize, 14))
+    end
+end
+
+-- Strips all texture regions from a Blizzard template-driven frame 
+local function ApplyFlatPanel(frame, insetL, insetT, insetR, insetB)
+    insetL, insetT, insetR, insetB = insetL or 0, insetT or 0, insetR or 0, insetB or 0
+    for _, region in ipairs({ frame:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetTexture(nil)
+        end
+    end
+
+    local bg = frame:CreateTexture(nil, "BACKGROUND")
+    bg:SetPoint("TOPLEFT", insetL, -insetT)
+    bg:SetPoint("BOTTOMRIGHT", -insetR, insetB)
+    bg:SetColorTexture(unpack(Colors.inputBg))
+
+    local top = frame:CreateTexture(nil, "BORDER")
+    top:SetColorTexture(unpack(Colors.accentDim))
+    top:SetPoint("TOPLEFT", bg, "TOPLEFT")
+    top:SetPoint("TOPRIGHT", bg, "TOPRIGHT")
+    top:SetHeight(1)
+
+    local bottom = frame:CreateTexture(nil, "BORDER")
+    bottom:SetColorTexture(unpack(Colors.accentDim))
+    bottom:SetPoint("BOTTOMLEFT", bg, "BOTTOMLEFT")
+    bottom:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT")
+    bottom:SetHeight(1)
+
+    local left = frame:CreateTexture(nil, "BORDER")
+    left:SetColorTexture(unpack(Colors.accentDim))
+    left:SetPoint("TOPLEFT", bg, "TOPLEFT")
+    left:SetPoint("BOTTOMLEFT", bg, "BOTTOMLEFT")
+    left:SetWidth(1)
+
+    local right = frame:CreateTexture(nil, "BORDER")
+    right:SetColorTexture(unpack(Colors.accentDim))
+    right:SetPoint("TOPRIGHT", bg, "TOPRIGHT")
+    right:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT")
+    right:SetWidth(1)
+
+    return bg
+end
+
+-- Reskins an AceGUI Dropdown
+function BlacklistWarden:SkinFlatDropdown(dropdown)
+    if dropdown.skinned then return end
+    dropdown.skinned = true
+
+    if dropdown.dropdown then
+        ApplyFlatPanel(dropdown.dropdown, 17, 3, 16, 3)
+    end
+
+    if dropdown.text then
+        dropdown.text:SetTextColor(unpack(Colors.text))
+    end
+    if dropdown.label then
+        dropdown.label:SetTextColor(unpack(Colors.textDim))
+    end
+    if dropdown.button then
+        local icon = dropdown.button.GetNormalTexture and dropdown.button:GetNormalTexture()
+        if icon then icon:SetVertexColor(unpack(Colors.accent)) end
+    end
+end
+
+-- Reskins an AceGUI single-line EditBox
+function BlacklistWarden:SkinFlatEditbox(widget)
+    if widget.skinned then return end
+    widget.skinned = true
+
+    if widget.editbox then
+        ApplyFlatPanel(widget.editbox, -5, 1, 6, 3)
+        widget.editbox:SetTextColor(unpack(Colors.text))
+    end
+    if widget.label then
+        widget.label:SetTextColor(unpack(Colors.textDim))
+    end
+end
+
+-- Reskins an AceGUI MultiLineEditBox
+function BlacklistWarden:SkinFlatMultiLineEditbox(widget)
+    if widget.skinned then return end
+    widget.skinned = true
+
+    if widget.scrollBG and widget.scrollBG.SetBackdrop then
+        widget.scrollBG:SetBackdrop(
+            {
+                bgFile = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                tile = false,
+                tileSize = 0,
+                edgeSize = 1,
+                insets = { left = 1, right = 1, top = 1, bottom = 1 }
+            })
+        widget.scrollBG:SetBackdropColor(unpack(Colors.inputBg))
+        widget.scrollBG:SetBackdropBorderColor(unpack(Colors.accentDim))
+    end
+    if widget.editBox then
+        widget.editBox:SetTextColor(unpack(Colors.text))
+    end
+    if widget.label then
+        widget.label:SetTextColor(unpack(Colors.textDim))
+    end
+
+    if widget.scrollFrame then
+        BlacklistWarden:SkinFlatScrollbar(widget.scrollFrame)
+    end
+end
+
+-- Recolors the divider/label of an AceGUI Heading to match the accent palette.
+function BlacklistWarden:SkinFlatHeading(heading)
+    if heading.skinned then return end
+    heading.skinned = true
+
+    for _, region in ipairs({ heading.frame:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetVertexColor(unpack(Colors.accentDim))
+        end
+    end
+    if heading.label then
+        heading.label:SetTextColor(unpack(Colors.accent))
+    end
+end
+
+-- Recolors the backdrop panel AceGUI draws behind TabGroup content / InlineGroup
+-- boxes.
+function BlacklistWarden:SkinFlatContainerBorder(widget)
+    if widget.borderSkinned then return end
+    widget.borderSkinned = true
+
+    local border = widget.border
+    if not border and widget.frame then
+        for _, child in ipairs({ widget.frame:GetChildren() }) do
+            if child.GetBackdrop and child:GetBackdrop() then
+                border = child
+                break
+            end
+        end
+    end
+
+    if border and border.SetBackdrop then
+        border:SetBackdrop(
+            {
+                bgFile = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                tile = false,
+                tileSize = 0,
+                edgeSize = 1,
+                insets = { left = 1, right = 1, top = 1, bottom = 1 }
+            })
+        border:SetBackdropColor(unpack(Colors.tabGroupBg))
+        border:SetBackdropBorderColor(unpack(Colors.accentDim))
+    end
+    if widget.titletext then
+        widget.titletext:SetTextColor(unpack(Colors.accent))
+    end
+end
+
+function BlacklistWarden:SkinFlatTabGroupBorder(tabgroup)
+    if tabgroup.borderSkinned then return end
+    tabgroup.borderSkinned = true
+
+    local border = tabgroup.border
+    if not border and tabgroup.frame then
+        for _, child in ipairs({ tabgroup.frame:GetChildren() }) do
+            if child.GetBackdrop and child:GetBackdrop() then
+                border = child
+                break
+            end
+        end
+    end
+
+    if border and border.SetBackdrop then
+        border:SetBackdrop(nil)
+    end
+end
+
+-- Recolors an AceGUI Dropdown-free UIPanelScrollBarTemplate scrollbar
+function BlacklistWarden:SkinFlatScrollbar(scrollFrame)
+    local bar = scrollFrame.ScrollBar
+    if not bar then
+        -- Fallback for clients where the scrollbar isn't exposed via parentKey
+        for _, child in ipairs({ scrollFrame:GetChildren() }) do
+            if child.IsObjectType and child:IsObjectType("Slider") then
+                bar = child
+                break
+            end
+        end
+    end
+    if not bar then return end
+    if bar.flatSkinned then return end
+    bar.flatSkinned = true
+
+    local track = bar:CreateTexture(nil, "BACKGROUND")
+    track:SetPoint("TOP", bar, "TOP", 0, 0)
+    track:SetPoint("BOTTOM", bar, "BOTTOM", 0, 0)
+    track:SetWidth(4)
+    track:SetColorTexture(1, 1, 1, 0.06)
+
+    for _, buttonKey in ipairs({ "ScrollUpButton", "ScrollDownButton" }) do
+        local btn = bar[buttonKey]
+        if btn then
+            for _, texKey in ipairs({ "Normal", "Pushed", "Disabled", "Highlight" }) do
+                local tex = btn[texKey]
+                if tex then tex:SetAlpha(0) end
+            end
+        end
+    end
+
+    local thumb = bar.ThumbTexture or (bar.GetThumbTexture and bar:GetThumbTexture())
+    if thumb then
+        thumb:SetTexture(nil)
+        thumb:SetColorTexture(unpack(Colors.accent))
+        thumb:SetWidth(4)
+    end
+end
+
+-- Reskins a single AceGUI TabGroup tab button
+function BlacklistWarden:SkinFlatTabButton(tab)
+    if tab.flatSkinned then return end
+    tab.flatSkinned = true
+
+    for _, region in ipairs({ tab:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetAlpha(0)
+        end
+    end
+
+    local bg = tab:CreateTexture(nil, "BACKGROUND")
+    bg:SetPoint("TOPLEFT", 4, -4)
+    bg:SetPoint("BOTTOMRIGHT", -4, 2)
+    tab.flatBg = bg
+
+    local top = tab:CreateTexture(nil, "BORDER")
+    top:SetColorTexture(unpack(Colors.accentDim))
+    top:SetPoint("TOPLEFT", bg, "TOPLEFT")
+    top:SetPoint("TOPRIGHT", bg, "TOPRIGHT")
+    top:SetHeight(1)
+
+    local bottom = tab:CreateTexture(nil, "BORDER")
+    bottom:SetColorTexture(unpack(Colors.accent))
+    bottom:SetPoint("BOTTOMLEFT", bg, "BOTTOMLEFT")
+    bottom:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT")
+    bottom:SetHeight(2)
+    tab.flatUnderline = bottom
+
+    local left = tab:CreateTexture(nil, "BORDER")
+    left:SetColorTexture(unpack(Colors.accentDim))
+    left:SetPoint("TOPLEFT", bg, "TOPLEFT")
+    left:SetPoint("BOTTOMLEFT", bg, "BOTTOMLEFT")
+    left:SetWidth(1)
+
+    local right = tab:CreateTexture(nil, "BORDER")
+    right:SetColorTexture(unpack(Colors.accentDim))
+    right:SetPoint("TOPRIGHT", bg, "TOPRIGHT")
+    right:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT")
+    right:SetWidth(1)
+
+    tab:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    local highlight = tab:GetHighlightTexture()
+    if highlight then
+        highlight:SetVertexColor(unpack(Colors.rowHighlight))
+        highlight:ClearAllPoints()
+        highlight:SetPoint("TOPLEFT", bg, "TOPLEFT")
+        highlight:SetPoint("BOTTOMRIGHT", bg, "BOTTOMRIGHT")
+    end
+
+    local function ApplyState(selected)
+        if selected then
+            bg:SetColorTexture(0.16, 0.14, 0.08, 1)
+            bottom:SetColorTexture(unpack(Colors.accent))
+            bottom:SetHeight(2)
+            if tab.text then tab.text:SetTextColor(unpack(Colors.accent)) end
+        else
+            bg:SetColorTexture(unpack(Colors.headerBg))
+            bottom:SetColorTexture(unpack(Colors.accentDim))
+            bottom:SetHeight(1)
+            if tab.text then tab.text:SetTextColor(unpack(Colors.textDim)) end
+        end
+    end
+
+    ApplyState(tab.selected)
+    hooksecurefunc(tab, "SetSelected", function(self, selected)
+        ApplyState(selected)
+    end)
+end
+
+-- Reskins an AceGUI TabGroup
+function BlacklistWarden:SkinFlatTabGroup(tabgroup)
+    if tabgroup.skinned then return end
+    tabgroup.skinned = true
+
+    BlacklistWarden:SkinFlatContainerBorder(tabgroup)
+
+    if tabgroup.tabs then
+        for _, tab in ipairs(tabgroup.tabs) do
+            BlacklistWarden:SkinFlatTabButton(tab)
+        end
+    end
+end
+
+
 --Create default blizzard button
 function BlacklistWarden:CreateStandardButton(text, width, parent)
     local button = {}
@@ -45,6 +531,7 @@ function BlacklistWarden:CreateStandardButton(text, width, parent)
     button:SetWidth(width)
     button.frame:SetParent(parent)
     button.frame:Show()
+    BlacklistWarden:SkinFlatButton(button)
     return button;
 end
 
@@ -59,14 +546,15 @@ function BlacklistWarden:CreateMainFrame(name, width, height)
     container:SetScale(1 / UIParent:GetScale())
     container:SetBackdrop(
         {
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true,
-            tileSize = 32,
-            edgeSize = 15,
-            insets = { left = 2, right = 2, top = 2, bottom = 2 }
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            tile = false,
+            tileSize = 0,
+            edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-    container:SetBackdropColor(0, 0, 0, 0.7)
+    container:SetBackdropColor(unpack(Colors.panelBg))
+    container:SetBackdropBorderColor(unpack(Colors.panelBorder))
     container:SetMovable(true)
     container:RegisterForDrag("LeftButton")
     container:SetScript("OnDragStart",
@@ -81,7 +569,7 @@ end
 
 --Create warning window that shows when joining a group with a blacklisted player
 function BlacklistWarden:CreateBlacklistWarningWindow()
-    local container = BlacklistWarden:CreateMainFrame("BlacklistWarningWindow", 280, 130)
+    local container = BlacklistWarden:CreateMainFrame("BlacklistWarningWindow", 250, 180)
     local frameConfig = BlacklistWarden.db.profile.blacklistWarningFrame
     BlacklistWarden:HandleFrameConfig(container, frameConfig)
 
@@ -93,47 +581,41 @@ function BlacklistWarden:CreateBlacklistWarningWindow()
     end)
     savebutton.frame:SetPoint("BOTTOM", container, "BOTTOM", -60, 10)
 
-    local colorR, colorG, colorB, colorA = savebutton.frame:GetNormalFontObject():GetTextColor()
-
-
     local cancelbutton = BlacklistWarden:CreateStandardButton("Stay", 100, container)
-    cancelbutton:SetCallback("OnClick", function(this) this.frame:GetParent():Hide(); end)
+    cancelbutton:SetCallback("OnClick", function(this)
+        local parent = this.frame:GetParent()
+        BlacklistWarden:AcknowledgeBlacklistedPlayer(parent.currentPlayerKey)
+        parent:Hide()
+    end)
     cancelbutton.frame:SetPoint("BOTTOM", container, "BOTTOM", 60, 10)
 
+    local title = container:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("CENTER", container, "TOP", 0, -20)
+    title:SetTextColor(unpack(Colors.accent))
+    title:SetText("BLACKLISTED PLAYER")
 
-    local titleBg = CreateFrame("Frame", "titleBG", container,
-        BackdropTemplateMixin and "BackdropTemplate")
-    titleBg:SetWidth(150)
-    titleBg:SetHeight(30)
-    titleBg:SetBackdrop(
-        {
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true,
-            tileSize = 32,
-            edgeSize = 15,
-            insets = { left = 2, right = 2, top = 2, bottom = 2 }
-        })
-    titleBg:SetBackdropColor(0, 0, 0, 1)
-    titleBg:SetPoint("TOP", container, "TOP", 0, 13)
+    local titleUnderline = container:CreateTexture(nil, "ARTWORK")
+    titleUnderline:SetColorTexture(unpack(Colors.accentDim))
+    titleUnderline:SetHeight(1)
+    titleUnderline:SetPoint("BOTTOMLEFT", title, "BOTTOMLEFT", -10, -2)
+    titleUnderline:SetPoint("BOTTOMRIGHT", title, "BOTTOMRIGHT", 10, -2)
 
-    local title = titleBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("CENTER", titleBg, "CENTER", 0, 0)
-    title:SetTextColor(colorR, colorG, colorB, colorA)
-    title:SetText("Blacklisted player")
-    --title:SetTextColor(1,0,0,1)
     local name = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    name:SetPoint("TOPLEFT", container, "TOPLEFT", 10, -20)
+    name:SetPoint("TOPLEFT", titleUnderline, "TOPLEFT", 0, -10)
+    name:SetTextColor(unpack(Colors.text))
 
     local reason = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     reason:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -10)
+    reason:SetTextColor(unpack(Colors.text))
 
     local notes = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     notes:SetPoint("TOPLEFT", reason, "BOTTOMLEFT", 0, -10)
-    notes:SetWidth(250)
+    notes:SetWidth(200)
     notes:SetJustifyH("LEFT")
     notes:SetWordWrap(true)
-    notes:SetMaxLines(2)
+    notes:SetNonSpaceWrap(true)
+    notes:SetMaxLines(4)
+    notes:SetTextColor(unpack(Colors.text))
     local function RGBToHex(r, g, b)
         r = r <= 255 and r >= 0 and r or 0
         g = g <= 255 and g >= 0 and g or 0
@@ -141,6 +623,8 @@ function BlacklistWarden:CreateBlacklistWarningWindow()
         return string.format("%02x%02x%02x", r, g, b)
     end
     local function SetPlayerData(player)
+        container.currentPlayerKey = (player["name"] .. "-" .. player["server"]):lower()
+
         local class = string.upper(player["class"]:gsub("%s+", ""))
         name:SetText("Name: |cff" ..
             RGBToHex(classColor[class][1] * 255, classColor[class][2] * 255, classColor[class][3] * 255) ..
@@ -148,8 +632,8 @@ function BlacklistWarden:CreateBlacklistWarningWindow()
 
 
         --name:SetTextColor(classColor[class][1], classColor[class][2], classColor[class][3], 1);
-        reason:SetText("Reason: |cffd80000" .. player["reason"])
-        notes:SetText("Notes: |cffFFFFFF" .. player["notes"])
+        reason:SetText("Reason: |cffe8615f" .. player["reason"])
+        notes:SetText("Notes: \n|cffd9d9f0" .. player["notes"])
     end
     container.setPlayerData = SetPlayerData
     container:Hide()
@@ -178,7 +662,7 @@ end
 
 --Creates extra window to add/edit a player
 function BlacklistWarden:CreateBlacklistPopupWindow()
-    local container = BlacklistWarden:CreateMainFrame("BlacklistPopupWindow", 250, 200)
+    local container = BlacklistWarden:CreateMainFrame("BlacklistPopupWindow", 250, 240)
     local frameConfig = BlacklistWarden.db.profile.blacklistPopupFrame
     BlacklistWarden:HandleFrameConfig(container, frameConfig)
 
@@ -193,35 +677,23 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
             this.frame:GetParent():Hide()
         end)
 
-    local colorR, colorG, colorB, colorA = savebutton.frame:GetNormalFontObject():GetTextColor()
-
     local cancelbutton = BlacklistWarden:CreateStandardButton("Cancel", 100, container)
     cancelbutton.frame:SetPoint("BOTTOM", container, "BOTTOM", 60, 15)
     cancelbutton:SetCallback("OnClick", function(this) this.frame:GetParent():Hide(); end)
 
-    local titleBg = CreateFrame("Frame", "titleBG", container,
-        BackdropTemplateMixin and "BackdropTemplate")
-    titleBg:SetWidth(150)
-    titleBg:SetHeight(30)
-    titleBg:SetBackdrop(
-        {
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true,
-            tileSize = 32,
-            edgeSize = 15,
-            insets = { left = 2, right = 2, top = 2, bottom = 2 }
-        })
-    titleBg:SetBackdropColor(0, 0, 0, 1)
-    titleBg:SetPoint("TOP", container, "TOP", 0, 13)
+    local title = container:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("CENTER", container, "TOP", 0, -20)
+    title:SetTextColor(unpack(Colors.accent))
 
-    local title = titleBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("CENTER", titleBg, "CENTER", 0, 0)
-    title:SetTextColor(colorR, colorG, colorB, colorA)
+    local titleUnderline = container:CreateTexture(nil, "ARTWORK")
+    titleUnderline:SetColorTexture(unpack(Colors.accentDim))
+    titleUnderline:SetHeight(1)
+    titleUnderline:SetPoint("BOTTOMLEFT", title, "BOTTOMLEFT", -10, -2)
+    titleUnderline:SetPoint("BOTTOMRIGHT", title, "BOTTOMRIGHT", 10, -2)
 
     container.title = title
     local playerName = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    playerName:SetPoint("TOP", container, "TOP", 0, -20)
+    playerName:SetPoint("TOP", titleUnderline, "TOP", 0, -10)
     playerName:SetWordWrap(true)
     playerName:SetMaxLines(1)
     playerName:SetWidth(200)
@@ -246,12 +718,13 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     )
     drop.frame:SetParent(container)
     drop.frame:Show()
-    drop.frame:SetPoint("LEFT", container, "TOPLEFT", 20, -52)
+    BlacklistWarden:SkinFlatDropdown(drop)
+    drop.frame:SetPoint("LEFT", playerName, "TOPLEFT", -5, -33)
     container.dropdown = drop;
 
     local muteLabel = container:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     muteLabel:SetPoint("LEFT", drop.frame, "RIGHT", 20, 10)
-    --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
+    muteLabel:SetTextColor(unpack(Colors.textDim))
     muteLabel:SetText("Mute?")
 
     local checkbox = {}
@@ -259,27 +732,31 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     checkbox:SetType("checkbox")
     checkbox.frame:SetParent(container)
     checkbox.frame:Show()
-    checkbox.frame:SetPoint("LEFT", drop.frame, "RIGHT", 20, -10)
+    checkbox.frame:SetPoint("LEFT", drop.frame, "RIGHT", 20, -7)
+    checkbox.frame:SetWidth(23)
+    BlacklistWarden:SkinFlatCheckbox(checkbox, 20)
     container.checkbox = checkbox
 
     local noteLabel = container:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     noteLabel:SetPoint("LEFT", drop.frame, "LEFT", 0, -30)
-    --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
+    noteLabel:SetTextColor(unpack(Colors.textDim))
     noteLabel:SetText("Note (optional):")
 
+    -- Modern flat inset for the note editbox instead of the old tooltip-style border
     local editBoxContainer = CreateFrame("Frame", nil, container, BackdropTemplateMixin and "BackdropTemplate")
     editBoxContainer:SetPoint("TOPLEFT", noteLabel, "BOTTOMLEFT", 0, -1)
     editBoxContainer:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -20, 49)
     editBoxContainer:SetBackdrop(
         {
-            bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            tile = true,
-            tileSize = 16,
-            edgeSize = 16,
-            insets = { left = 4, right = 3, top = 4, bottom = 3 }
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            tile = false,
+            tileSize = 0,
+            edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-    editBoxContainer:SetBackdropColor(0, 0, 0, 0.6)
+    editBoxContainer:SetBackdropColor(unpack(Colors.inputBg))
+    editBoxContainer:SetBackdropBorderColor(unpack(Colors.accentDim))
 
     local editbox = CreateFrame("EditBox", "NoteEditBox", container)
     editbox:SetPoint("TOPLEFT", editBoxContainer, "TOPLEFT", 5, -8)
@@ -291,6 +768,7 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     editbox:SetScript("OnEnterPressed", function(self)
         self:ClearFocus()
     end)
+    editbox:SetTextColor(unpack(Colors.text))
     --editbox:SetScript("OnShow", function(this) editbox:SetFocus() end)
     container.editbox = editbox;
     container:Hide()
@@ -317,9 +795,10 @@ function BlacklistWarden:CreateListFrame()
     heading.frame:SetParent(container)
     heading.frame:SetPoint("TOP", container, "TOP", 0, -20)
     heading.frame:Show()
+    BlacklistWarden:SkinFlatHeading(heading)
 
     local closebutton = BlacklistWarden:CreateStandardButton("Close", 80, container)
-    closebutton.frame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -10, 10)
+    closebutton.frame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -6, 10)
     closebutton:SetHeight(20)
     closebutton:SetCallback("OnClick",
         function(this)
@@ -332,6 +811,7 @@ function BlacklistWarden:CreateListFrame()
     tabgroup.frame:SetPoint("TOPLEFT", container, "TOPLEFT", 5, -30)
     tabgroup.frame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -5, 30)
     tabgroup:SelectTab("1")
+    BlacklistWarden:SkinFlatTabGroup(tabgroup)
 
 
 
@@ -340,6 +820,7 @@ function BlacklistWarden:CreateListFrame()
     local scrollFrame = CreateFrame("ScrollFrame", nil, tabgroup.frame, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", tabgroup.frame, "TOPLEFT", 0, -60)
     scrollFrame:SetPoint("BOTTOMRIGHT", tabgroup.frame, "BOTTOMRIGHT", -28, 8)
+    BlacklistWarden:SkinFlatScrollbar(scrollFrame)
     -- Create the scrolling child frame, set its width to fit, and give it an arbitrary minimum height (such as 1)
     local scrollChild = CreateFrame("Frame")
     scrollFrame:SetScrollChild(scrollChild)
@@ -351,16 +832,18 @@ function BlacklistWarden:CreateListFrame()
     BlacklistWarden:CreateColumnHeader("Class", scrollFrame, 110, "scroll", scrollChild)
     BlacklistWarden:CreateColumnHeader("Reason", scrollFrame, 80, "scroll", scrollChild)
     BlacklistWarden:CreateColumnHeader("Date Added", scrollFrame, 90, "scroll", scrollChild)
-    BlacklistWarden:CreateColumnHeader("Muted?", scrollFrame, 60, "scroll", scrollChild)
-    BlacklistWarden:CreateColumnHeader("Notes", scrollFrame, 288, "scroll", scrollChild)
+    BlacklistWarden:CreateColumnHeader("Muted?", scrollFrame, 65, "scroll", scrollChild)
+    BlacklistWarden:CreateColumnHeader("Notes", scrollFrame, 278, "scroll", scrollChild)
 
     --BlacklistWarden:CreateTableButton(scrollcontainer.frame,1);
 
     local addFrame = AceGUI:Create("InlineGroup")
     addFrame.frame:SetParent(tabgroup.frame)
-    addFrame.frame:SetPoint("TOPLEFT", tabgroup.frame, "TOPLEFT", 10, -50)
+    addFrame.frame:SetPoint("TOPLEFT", tabgroup.frame, "TOPLEFT", 20, -50)
     addFrame.frame:SetPoint("BOTTOMRIGHT", tabgroup.frame, "BOTTOMRIGHT", -10, 60)
-    addFrame:SetTitle("Add to blacklist: ")
+    addFrame:SetTitle("ADD TO BLACKLIST: ")
+    BlacklistWarden:SkinFlatTabGroupBorder(addFrame)
+    --BlacklistWarden:SkinFlatContainerBorder(addFrame)
 
 
     local nameBox = AceGUI:Create("EditBox")
@@ -368,15 +851,19 @@ function BlacklistWarden:CreateListFrame()
     nameBox:SetWidth(200)
     nameBox.frame:SetParent(addFrame.frame)
     nameBox:DisableButton(true)
-    nameBox.frame:SetPoint("TOPLEFT", addFrame.frame, "TOPLEFT", 30, -30)
+    nameBox.frame:SetPoint("TOPLEFT", addFrame.frame, "TOPLEFT", 15, -30)
     nameBox.frame:Show()
+    BlacklistWarden:SkinFlatEditbox(nameBox)
 
     local separator = AceGUI:Create("Label")
     separator:SetText("-")
     separator.frame:SetParent(addFrame.frame)
-    separator.frame:SetPoint("LEFT", nameBox.frame, "RIGHT", 6, -7)
-    separator.frame:SetPoint("RIGHT", nameBox.frame, "RIGHT", 15, -7)
+    separator.frame:SetPoint("LEFT", nameBox.frame, "RIGHT", 3, -7)
+    separator.frame:SetPoint("RIGHT", nameBox.frame, "RIGHT", 13, -7)
     separator.frame:Show()
+    if separator.label then
+        separator.label:SetTextColor(unpack(Colors.textDim))
+    end
 
     local realmBox = AceGUI:Create("EditBox")
     realmBox:SetLabel("Realm:")
@@ -385,16 +872,18 @@ function BlacklistWarden:CreateListFrame()
     realmBox.frame:SetParent(addFrame.frame)
     realmBox.frame:SetPoint("LEFT", separator.frame, "RIGHT", 1, 7)
     realmBox.frame:Show()
+    BlacklistWarden:SkinFlatEditbox(realmBox)
 
     local classDropdown = {}
     classDropdown = AceGUI:Create("Dropdown")
     classDropdown:SetList(className)
-    classDropdown:SetWidth(200)
+    classDropdown:SetWidth(193)
     classDropdown:SetValue("DEATHKNIGHT")
     classDropdown:SetLabel("Class:")
 
     classDropdown.frame:SetParent(addFrame.frame)
     classDropdown.frame:Show()
+    BlacklistWarden:SkinFlatDropdown(classDropdown)
     classDropdown.frame:SetPoint("TOPLEFT", nameBox.frame, "BOTTOMLEFT", 0, -10)
     classDropdown:SetCallback("OnValueChanged", function(this, event, item)
         BlacklistWarden:SavePlayerInfoValue("playerClass",
@@ -405,7 +894,7 @@ function BlacklistWarden:CreateListFrame()
     local reasonDropdown = {}
     reasonDropdown = AceGUI:Create("Dropdown")
     reasonDropdown:SetList(BlacklistWarden.db.global.blacklistPopupWindowOptions)
-    reasonDropdown:SetWidth(200)
+    reasonDropdown:SetWidth(193)
     reasonDropdown:SetValue(1)
     reasonDropdown:SetLabel("Reason:")
     reasonDropdown:SetCallback("OnValueChanged", function(this, event, item)
@@ -415,15 +904,17 @@ function BlacklistWarden:CreateListFrame()
     )
     reasonDropdown.frame:SetParent(addFrame.frame)
     reasonDropdown.frame:Show()
-    reasonDropdown.frame:SetPoint("LEFT", classDropdown.frame, "RIGHT", 14, 0)
+    BlacklistWarden:SkinFlatDropdown(reasonDropdown)
+    reasonDropdown.frame:SetPoint("LEFT", classDropdown.frame, "RIGHT", 21, 0)
 
     local notesBox = AceGUI:Create("MultiLineEditBox")
     notesBox:SetLabel("Note (optional):")
-    notesBox:SetWidth(410)
+    notesBox:SetWidth(425)
     notesBox:DisableButton(true)
     notesBox.frame:SetParent(addFrame.frame)
     notesBox.frame:SetPoint("TOPLEFT", classDropdown.frame, "BOTTOMLEFT", 0, -10)
     notesBox.frame:Show()
+    BlacklistWarden:SkinFlatMultiLineEditbox(notesBox)
     notesBox:SetMaxLetters(140)
     notesBox:SetNumLines(2)
 
@@ -456,7 +947,7 @@ function BlacklistWarden:CreateListFrame()
 
     local muteLabel = notesBox.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     muteLabel:SetPoint("BOTTOMLEFT", notesBox.frame, "BOTTOMLEFT", 0, -15)
-    --noteLabel:SetTextColor(colorR, colorG, colorB, colorA)
+    muteLabel:SetTextColor(unpack(Colors.textDim))
     muteLabel:SetText("Mute?")
 
     local checkbox = {}
@@ -466,10 +957,12 @@ function BlacklistWarden:CreateListFrame()
     checkbox.frame:SetParent(addFrame.frame)
     checkbox.frame:Show()
     checkbox.frame:SetPoint("BOTTOMLEFT", notesBox.frame, "BOTTOMLEFT", 0, -38)
+    checkbox.frame:SetWidth(23)
+    BlacklistWarden:SkinFlatCheckbox(checkbox, 20)
     container.checkbox = checkbox
 
     local addButton = BlacklistWarden:CreateStandardButton("Add", 100, addFrame.frame)
-    addButton.frame:SetPoint("BOTTOMLEFT", addFrame.frame, "BOTTOMLEFT", 30, 30)
+    addButton.frame:SetPoint("BOTTOMLEFT", addFrame.frame, "BOTTOMLEFT", 15, 30)
     addButton:SetCallback("OnClick", function() AddPlayer(); end)
 
     addFrame.frame:Hide()
@@ -528,6 +1021,11 @@ function BlacklistWarden:CreateListFrame()
                     FilteredScrollButtons[i].notes:SetText(" ")
                 end
                 FilteredScrollButtons[i].muted:SetText(player["muted"] and "Yes" or "No")
+                if player["muted"] == true then
+                    FilteredScrollButtons[i].muted:SetTextColor(unpack(Colors.success))
+                else
+                    FilteredScrollButtons[i].muted:SetTextColor(unpack(Colors.textDim))
+                end
                 break
             end
         end
@@ -559,9 +1057,42 @@ function BlacklistWarden:CreateColumnHeader(text, parent, width, name, child)
 
     local Header = CreateFrame("Button", name .. "Header" .. columnCount, parent, "WhoFrameColumnHeaderTemplate")
     Header:SetWidth(width)
-    _G[name .. "Header" .. columnCount .. "Middle"]:SetWidth(width - 9)
+    Header:SetHeight(22)
+
+    -- Strip the legacy Blizzard header art 
+    local headerName = Header:GetName()
+    local leftTex = _G[headerName .. "Left"]
+    local middleTex = _G[headerName .. "Middle"]
+    local rightTex = _G[headerName .. "Right"]
+    if leftTex then leftTex:SetTexture(nil) end
+    if middleTex then middleTex:SetTexture(nil); middleTex:SetWidth(width - 9) end
+    if rightTex then rightTex:SetTexture(nil) end
+
+    local flatBg = Header:CreateTexture(nil, "BACKGROUND")
+    flatBg:SetAllPoints(Header)
+    flatBg:SetColorTexture(unpack(Colors.headerBg))
+
+    local flatUnderline = Header:CreateTexture(nil, "ARTWORK")
+    flatUnderline:SetColorTexture(unpack(Colors.accentDim))
+    flatUnderline:SetHeight(1)
+    flatUnderline:SetPoint("BOTTOMLEFT", Header, "BOTTOMLEFT")
+    flatUnderline:SetPoint("BOTTOMRIGHT", Header, "BOTTOMRIGHT")
+
+    Header:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    local headerHighlight = Header:GetHighlightTexture()
+    if headerHighlight then
+        headerHighlight:SetVertexColor(unpack(Colors.rowHighlight))
+        headerHighlight:ClearAllPoints()
+        headerHighlight:SetPoint("TOPLEFT", Header, "TOPLEFT")
+        headerHighlight:SetPoint("BOTTOMRIGHT", Header, "BOTTOMRIGHT")
+    end
+
     Header:SetText(text)
     Header:SetNormalFontObject("GameFontHighlight")
+    Header:SetHighlightFontObject("GameFontHighlight")
+    if Header:GetFontString() then
+        Header:GetFontString():SetTextColor(unpack(Colors.accent))
+    end
     Header:SetID(columnCount)
 
     if columnCount == 1 then
@@ -671,6 +1202,15 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
         else
             FilteredScrollButtons[i]:SetPoint("TOPLEFT", FilteredScrollButtons[i - 1], "BOTTOMLEFT")
         end
+        -- Re-stripe alternating rows after every sort so the banding stays consistent
+        -- with the new order.
+        if FilteredScrollButtons[i].rowStripe then
+            if i % 2 == 0 then
+                FilteredScrollButtons[i].rowStripe:SetColorTexture(unpack(Colors.rowBaseA))
+            else
+                FilteredScrollButtons[i].rowStripe:SetColorTexture(unpack(Colors.rowBaseB))
+            end
+        end
     end
 end
 
@@ -683,8 +1223,23 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
         FilteredScrollButtons[index]:SetPoint("TOPLEFT", FilteredScrollButtons[index - 1], "BOTTOMLEFT")
     end
 
-    FilteredScrollButtons[index]:SetSize(800, 20)
+    FilteredScrollButtons[index]:SetSize(840, 20)
     FilteredScrollButtons[index]:RegisterForClicks("RightButtonDown")
+
+    local rowStripe = FilteredScrollButtons[index]:CreateTexture(nil, "BACKGROUND")
+    rowStripe:SetAllPoints()
+    if index % 2 == 0 then
+        rowStripe:SetColorTexture(unpack(Colors.rowBaseA))
+    else
+        rowStripe:SetColorTexture(unpack(Colors.rowBaseB))
+    end
+    FilteredScrollButtons[index].rowStripe = rowStripe
+
+    FilteredScrollButtons[index]:SetHighlightTexture("Interface\\Buttons\\WHITE8x8")
+    local highlightTex = FilteredScrollButtons[index]:GetHighlightTexture()
+    if highlightTex then
+        highlightTex:SetVertexColor(unpack(Colors.rowHighlight))
+    end
 
     local function createDropdown(self)
         BlacklistWarden:CreateDropdown(self)
@@ -696,6 +1251,7 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     -- set name style
     FilteredScrollButtons[index].name:SetWidth(100)
     FilteredScrollButtons[index].name:SetText(player["name"])
+    FilteredScrollButtons[index].name:SetTextColor(unpack(Colors.text))
     -- set active style
     FilteredScrollButtons[index].server = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontNormal")
@@ -703,6 +1259,7 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     FilteredScrollButtons[index].server:SetWidth(100)
     FilteredScrollButtons[index].server:SetJustifyH("LEFT")
     FilteredScrollButtons[index].server:SetText(player["server"])
+    FilteredScrollButtons[index].server:SetTextColor(unpack(Colors.textDim))
     -- create blocked style
     FilteredScrollButtons[index].class = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontHighlight")
@@ -719,7 +1276,7 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     FilteredScrollButtons[index].reason:SetPoint("LEFT", FilteredScrollButtons[index].class, "RIGHT", 10, 0)
     FilteredScrollButtons[index].reason:SetWidth(70)
     FilteredScrollButtons[index].reason:SetJustifyH("LEFT")
-    FilteredScrollButtons[index].reason:SetTextColor(1, 0, 0, 1)
+    FilteredScrollButtons[index].reason:SetTextColor(unpack(Colors.danger))
     if player["reason"] and player["reason"] ~= "" then
         FilteredScrollButtons[index].reason:SetText(player["reason"])
     else
@@ -729,29 +1286,33 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     FilteredScrollButtons[index].date = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontNormal")
     FilteredScrollButtons[index].date:SetPoint("LEFT", FilteredScrollButtons[index].reason, "RIGHT", 10, 0)
-    FilteredScrollButtons[index].date:SetWidth(80)
+    FilteredScrollButtons[index].date:SetWidth(93)
     FilteredScrollButtons[index].date:SetJustifyH("LEFT")
+    FilteredScrollButtons[index].date:SetTextColor(unpack(Colors.textDim))
     local date, time = strsplit(" ", player["date"])
     FilteredScrollButtons[index].date:SetText(date)
 
     FilteredScrollButtons[index].muted = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontNormal")
     FilteredScrollButtons[index].muted:SetPoint("LEFT", FilteredScrollButtons[index].date, "RIGHT", 10, 0)
-    FilteredScrollButtons[index].muted:SetWidth(50)
+    FilteredScrollButtons[index].muted:SetWidth(42)
     FilteredScrollButtons[index].muted:SetJustifyH("LEFT")
     FilteredScrollButtons[index].muted:SetMaxLines(1)
     if player["muted"] == true then
         FilteredScrollButtons[index].muted:SetText("Yes")
+        FilteredScrollButtons[index].muted:SetTextColor(unpack(Colors.success))
     else
         FilteredScrollButtons[index].muted:SetText("No")
+        FilteredScrollButtons[index].muted:SetTextColor(unpack(Colors.textDim))
     end
 
     FilteredScrollButtons[index].notes = FilteredScrollButtons[index]:CreateFontString("FontString", "OVERLAY",
         "GameFontHighlight")
     FilteredScrollButtons[index].notes:SetPoint("LEFT", FilteredScrollButtons[index].muted, "RIGHT", 10, 0)
-    FilteredScrollButtons[index].notes:SetWidth(250)
+    FilteredScrollButtons[index].notes:SetWidth(255)
     FilteredScrollButtons[index].notes:SetJustifyH("LEFT")
     FilteredScrollButtons[index].notes:SetMaxLines(1)
+    FilteredScrollButtons[index].notes:SetTextColor(unpack(Colors.textDim))
     if player["notes"] and player["notes"] ~= "" then
         FilteredScrollButtons[index].notes:SetText(player["notes"])
     else

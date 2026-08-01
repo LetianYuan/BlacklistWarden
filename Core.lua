@@ -234,6 +234,18 @@ end
 local playerInfo = {}
 
 local previousMembers = {}
+
+local acknowledgedBlacklistPlayers = {}
+
+-- Called by the warning window's "Stay" button so this specific blacklisted
+-- player stops re-triggering the popup for the rest of the current group,
+-- without affecting any other blacklisted player who might also be present.
+function BlacklistWarden:AcknowledgeBlacklistedPlayer(fullnameLower)
+    if fullnameLower then
+        acknowledgedBlacklistPlayers[fullnameLower] = true
+    end
+end
+
 -- Callback for GROUP_ROSTER_UPDATE, checks and warns if any player is in your blacklist
 function BlacklistWarden:CheckPlayersOnGroupUpdate()
     local groupCount = GetNumGroupMembers()
@@ -254,7 +266,7 @@ function BlacklistWarden:CheckPlayersOnGroupUpdate()
             newMembers[fullname] = classId
             --check only if someone joined
             if groupCount > BlacklistWarden.db.global.previousGroupSize then
-                if BlacklistWarden:IsPlayerInList(fullname) then
+                if BlacklistWarden:IsPlayerInList(fullname) and not acknowledgedBlacklistPlayers[fullname:lower()] then
                     if blacklistPopupWarning then
                         blacklistPopupWarning.setPlayerData(BlacklistWarden.db.global
                             .blacklistedPlayers[fullname:lower()])
@@ -280,6 +292,10 @@ function BlacklistWarden:CheckPlayersOnGroupUpdate()
 
     previousMembers = newMembers
     BlacklistWarden.db.global.previousGroupSize = groupCount;
+
+    if groupCount == 0 then
+        acknowledgedBlacklistPlayers = {}
+    end
 end
 
 -- Slash commands
@@ -395,7 +411,7 @@ end
 function BlacklistWarden:BlacklistButton()
     if BlacklistWarden.db.profile.showPopup then
         if blacklistPopupWindow then
-            blacklistPopupWindow.title:SetText("Add to blacklist")
+            blacklistPopupWindow.title:SetText("ADD TO BLACKLIST")
             blacklistPopupWindow.setPlayerName({
                 ["name"] = playerInfo["playerName"],
                 ["server"] = playerInfo
@@ -429,7 +445,7 @@ function BlacklistWarden:EditEntry(playername)
         ["reason"] = player["reason"]
     }
     blacklistPopupWindow.setPlayerName(player)
-    blacklistPopupWindow.title:SetText("Edit")
+    blacklistPopupWindow.title:SetText("EDIT")
     for i = 1, #BlacklistWarden.db.global.blacklistPopupWindowOptions do
         if BlacklistWarden.db.global.blacklistPopupWindowOptions[i] == player["reason"] then
             blacklistPopupWindow.dropdown:SetValue(i)
