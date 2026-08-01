@@ -918,32 +918,6 @@ function BlacklistWarden:CreateListFrame()
     notesBox:SetMaxLetters(140)
     notesBox:SetNumLines(2)
 
-    local function AddPlayer()
-        if nameBox:GetText() == "" or realmBox:GetText() == "" then
-            print("|cffFFFF00Blacklist Warden:|r Name or realm missing.")
-        else
-            local nameBoxString = nameBox:GetText():lower()
-            nameBoxString = nameBoxString:sub(1, 1):upper() .. nameBoxString:sub(2)
-
-            local realmBoxString = realmBox:GetText():lower()
-            realmBoxString = realmBoxString:sub(1, 1):upper() .. realmBoxString:sub(2)
-
-            BlacklistWarden:SavePlayerInfoValue("playerName", nameBoxString:match("^%s*(.-)%s*$"))
-            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBoxString:match("^%s*(.-)%s*$"))
-            BlacklistWarden:SavePlayerInfoValue("notes", notesBox:GetText())
-            BlacklistWarden:WritePlayerToDisk()
-            nameBox:SetText("")
-            realmBox:SetText("")
-            notesBox:SetText("")
-            reasonDropdown:SetValue(1)
-            BlacklistWarden:SavePlayerInfoValue("reason",
-                BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
-            classDropdown:SetValue("DEATHKNIGHT")
-            BlacklistWarden:SavePlayerInfoValue("playerClass",
-                "DEATHKNIGHT")
-        end
-    end
-
 
     local muteLabel = notesBox.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     muteLabel:SetPoint("BOTTOMLEFT", notesBox.frame, "BOTTOMLEFT", 0, -15)
@@ -960,6 +934,33 @@ function BlacklistWarden:CreateListFrame()
     checkbox.frame:SetWidth(23)
     BlacklistWarden:SkinFlatCheckbox(checkbox, 20)
     container.checkbox = checkbox
+
+    local function AddPlayer()
+        if nameBox:GetText() == "" or realmBox:GetText() == "" then
+            print("|cffFFFF00Blacklist Warden:|r Name or realm missing.")
+        else
+            local nameBoxString = nameBox:GetText():lower()
+            nameBoxString = nameBoxString:sub(1, 1):upper() .. nameBoxString:sub(2)
+
+            local realmBoxString = realmBox:GetText():lower()
+            realmBoxString = realmBoxString:sub(1, 1):upper() .. realmBoxString:sub(2)
+
+            BlacklistWarden:SavePlayerInfoValue("playerName", nameBoxString:match("^%s*(.-)%s*$"))
+            BlacklistWarden:SavePlayerInfoValue("playerServer", realmBoxString:match("^%s*(.-)%s*$"))
+            BlacklistWarden:SavePlayerInfoValue("notes", notesBox:GetText())
+            BlacklistWarden:SavePlayerInfoValue("muted", checkbox:GetValue())
+            BlacklistWarden:WritePlayerToDisk()
+            nameBox:SetText("")
+            realmBox:SetText("")
+            notesBox:SetText("")
+            reasonDropdown:SetValue(1)
+            BlacklistWarden:SavePlayerInfoValue("reason",
+                BlacklistWarden.db.global.blacklistPopupWindowOptions[1])
+            classDropdown:SetValue("DEATHKNIGHT")
+            BlacklistWarden:SavePlayerInfoValue("playerClass",
+                "DEATHKNIGHT")
+        end
+    end
 
     local addButton = BlacklistWarden:CreateStandardButton("Add", 100, addFrame.frame)
     addButton.frame:SetPoint("BOTTOMLEFT", addFrame.frame, "BOTTOMLEFT", 15, 30)
