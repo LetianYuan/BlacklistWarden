@@ -467,12 +467,13 @@ end
 
 -- Remove player from blacklist
 function BlacklistWarden:RemovePlayer(name)
-    local stringName = name
     name = name:lower()
     if not BlacklistWarden.db.global.blacklistedPlayers then BlacklistWarden.db.global.blacklistedPlayers = {} end
-    blacklistListWindow.removeEntry(BlacklistWarden.db.global.blacklistedPlayers[name])
+    local player = BlacklistWarden.db.global.blacklistedPlayers[name]
+    local displayName = player and (player["name"] .. "-" .. player["server"]) or name
+    blacklistListWindow.removeEntry(player)
     BlacklistWarden.db.global.blacklistedPlayers[name] = nil;
-    print("|cFF00FF00" .. stringName .. "|r removed from blacklist.")
+    print("|cFF00FF00" .. displayName .. "|r removed from blacklist.")
 end
 
 --check if player is on blacklist

@@ -1001,8 +1001,9 @@ function BlacklistWarden:CreateListFrame()
         index = index + 1
     end
     local function RemoveEntry(player)
+        local removeKey = (player["name"] .. "-" .. player["server"]):lower()
         for i = 1, #FilteredScrollButtons do
-            if FilteredScrollButtons[i].name:GetText() == player["name"] and FilteredScrollButtons[i].server:GetText() == player["server"] then
+            if FilteredScrollButtons[i].playerKey == removeKey then
                 FilteredScrollButtons[i]:Hide()
                 table.remove(FilteredScrollButtons, i)
                 lastSort = not lastSort
@@ -1013,8 +1014,9 @@ function BlacklistWarden:CreateListFrame()
         end
     end
     local function UpdateEntry(player)
+        local updateKey = (player["name"] .. "-" .. player["server"]):lower()
         for i = 1, #FilteredScrollButtons do
-            if FilteredScrollButtons[i].name:GetText() == player["name"] and FilteredScrollButtons[i].server:GetText() == player["server"] then
+            if FilteredScrollButtons[i].playerKey == updateKey then
                 FilteredScrollButtons[i].reason:SetText(player["reason"])
                 if player["notes"] and player["notes"] ~= "" then
                     FilteredScrollButtons[i].notes:SetText(player["notes"])
@@ -1141,7 +1143,7 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
             elseif sortBy == 5 then
                 local firstHalfa, secondHalfa = strsplit(" ",
                     BlacklistWarden.db.global.blacklistedPlayers
-                    [a.name:GetText():lower() .. "-" .. a.server:GetText():lower()]
+                    [a.playerKey]
                     ["date"])
                 local amonth, aday, ayear = strsplit("/", firstHalfa)
                 local ahour, amin, asec = strsplit(":", secondHalfa)
@@ -1155,7 +1157,7 @@ function BlacklistWarden:SortPlayerBlacklist(sortBy, parent)
                 }
                 local firstHalfb, secondHalfb = strsplit(" ",
                     BlacklistWarden.db.global.blacklistedPlayers
-                    [b.name:GetText():lower() .. "-" .. b.server:GetText():lower()]
+                    [b.playerKey]
                     ["date"])
                 local bmonth, bday, byear = strsplit("/", firstHalfb)
                 local bhour, bmin, bsec = strsplit(":", secondHalfb)
@@ -1226,6 +1228,8 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
 
     FilteredScrollButtons[index]:SetSize(840, 20)
     FilteredScrollButtons[index]:RegisterForClicks("RightButtonDown")
+
+    FilteredScrollButtons[index].playerKey = (player["name"] .. "-" .. player["server"]):lower()
 
     local rowStripe = FilteredScrollButtons[index]:CreateTexture(nil, "BACKGROUND")
     rowStripe:SetAllPoints()
@@ -1328,10 +1332,10 @@ end
 
 --Creates context menu for player list
 function BlacklistWarden:CreateDropdown(self)
-    local playerName = self.name:GetText() .. "-" .. self.server:GetText()
+    local playerKey = self.playerKey
     MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
         rootDescription:CreateTitle("Select option")
-        rootDescription:CreateButton("Edit", function() BlacklistWarden:EditEntry(playerName) end)
-        rootDescription:CreateButton("Remove", function() BlacklistWarden:RemovePlayer(playerName) end)
+        rootDescription:CreateButton("Edit", function() BlacklistWarden:EditEntry(playerKey) end)
+        rootDescription:CreateButton("Remove", function() BlacklistWarden:RemovePlayer(playerKey) end)
     end)
 end
