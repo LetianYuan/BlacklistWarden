@@ -37,6 +37,21 @@ local className = {
     ["EVOKER"] = "Evoker",
 }
 
+-- Safely turns a saved player's class field into a valid classColor/className
+-- key, tolerating a missing or unrecognized value
+local DEFAULT_CLASS = "WARRIOR"
+function BlacklistWarden:NormalizeClass(player)
+    local raw = player and player["class"]
+    if type(raw) ~= "string" then
+        return DEFAULT_CLASS
+    end
+    local class = string.upper(raw:gsub("%s+", ""))
+    if not classColor[class] then
+        return DEFAULT_CLASS
+    end
+    return class
+end
+
 -- Color palette 
 local Colors = {
     panelBg      = { 0.05, 0.05, 0.08, 0.96 },
@@ -625,7 +640,7 @@ function BlacklistWarden:CreateBlacklistWarningWindow()
     local function SetPlayerData(player)
         container.currentPlayerKey = (player["name"] .. "-" .. player["server"]):lower()
 
-        local class = string.upper(player["class"]:gsub("%s+", ""))
+        local class = BlacklistWarden:NormalizeClass(player)
         name:SetText("Name: |cff" ..
             RGBToHex(classColor[class][1] * 255, classColor[class][2] * 255, classColor[class][3] * 255) ..
             player["name"] .. "-" .. player["server"])
@@ -699,7 +714,7 @@ function BlacklistWarden:CreateBlacklistPopupWindow()
     playerName:SetWidth(200)
     local function SetPlayerName(player)
         playerName:SetText(player["name"] .. "-" .. player["server"])
-        local class = string.upper(player["class"]:gsub("%s+", ""))
+        local class = BlacklistWarden:NormalizeClass(player)
 
         playerName:SetTextColor(classColor[class][1], classColor[class][2], classColor[class][3], 1);
     end
@@ -1272,7 +1287,7 @@ function BlacklistWarden:CreateTableButton(parent, index, player)
     FilteredScrollButtons[index].class:SetWidth(100)
     FilteredScrollButtons[index].class:SetJustifyH("LEFT")
     --UnfilteredScrollButtons[index].class:SetWordWrap(false)
-    local class = string.upper(player["class"]:gsub("%s+", ""))
+    local class = BlacklistWarden:NormalizeClass(player)
     FilteredScrollButtons[index].class:SetText(className[class])
 
     FilteredScrollButtons[index].class:SetTextColor(classColor[class][1], classColor[class][2], classColor[class][3], 1);

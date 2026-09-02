@@ -471,7 +471,9 @@ function BlacklistWarden:RemovePlayer(name)
     if not BlacklistWarden.db.global.blacklistedPlayers then BlacklistWarden.db.global.blacklistedPlayers = {} end
     local player = BlacklistWarden.db.global.blacklistedPlayers[name]
     local displayName = player and (player["name"] .. "-" .. player["server"]) or name
-    blacklistListWindow.removeEntry(player)
+    if blacklistListWindow then
+        blacklistListWindow.removeEntry(player)
+    end
     BlacklistWarden.db.global.blacklistedPlayers[name] = nil;
     print("|cFF00FF00" .. displayName .. "|r removed from blacklist.")
 end
@@ -645,12 +647,12 @@ do
 
         BlacklistWarden:SavePlayerInfoValue("playerServer", realm)
         BlacklistWarden:SavePlayerInfoValue("playerName", name)
+        BlacklistWarden:SavePlayerInfoValue("playerClass", class)
         local fullName = playerInfo["playerName"] .. "-" .. playerInfo["playerServer"]
         local isOnList = BlacklistWarden:IsPlayerInList(fullName);
         local playername = UnitName("player")
         if fullName == playername .. "-" .. GetRealmName() then return end
 
-        BlacklistWarden:SavePlayerInfoValue("playerClass", class)
         if not isOnList then
             popupText = "|cffd80000Blacklist player|r"
         else
