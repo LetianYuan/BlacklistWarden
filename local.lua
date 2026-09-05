@@ -6,6 +6,11 @@ local isChinese = locale == "zhCN" or locale == "zhTW"
 -- English strings are kept as keys so the original text remains available.
 local translations = {
     ["Blacklist Warden"] = "黑名单守望者",
+    ["Enable blacklist announcements"] = "启用黑名单喊话",
+    ["Announces in the party channel when a blacklisted player is detected in the group."] = "当检测到黑名单玩家在队伍中时，在队伍频道发送提示消息。",
+    ["Detected blacklisted member "] = "检测到黑名单成员",
+    [", blacklist reason: "] = "，黑名单原因：",
+    ["Not specified"] = "未填写",
     ["Left click: |cffFFFFFFOpen player list"] = "左键点击：|cffFFFFFF打开玩家列表",
     ["Right click: |cffFFFFFFOpen settings"] = "右键点击：|cffFFFFFF打开设置",
     ["General Options"] = "常规选项",
@@ -18,7 +23,8 @@ local translations = {
     ["Toggle leaver messages"] = "显示离队消息",
     ["Toggles a chat message when other players leave the group, which provides a link you can right click to make it easier to add leavers."] = "其他玩家离开队伍时在聊天窗口显示消息，其中包含可右键点击的链接，方便将离队玩家加入黑名单。",
     ["Credits"] = "鸣谢",
-    ["|cffF58CBADiuxtros|r @ Icecrown (US) - |cffFF8000Author|r"] = "|cffF58CBADiuxtros|r @ Icecrown（美国）- |cffFF8000作者|r",
+    ["|cffF58CBADiuxtros|r @ Icecrown (US) - |cffFF8000Author|r"] = "|cffF58CBADiuxtros|r @ Icecrown (US)- |cffFF8000作者|r",
+    ["|cff3FC7EBMascascora|r @ 迦拉克隆 (CN) - |cffFF8000Chinese localization|r"] = "|cff3FC7EBMascascora|r @ 迦拉克隆 (CN) - |cffFF8000汉化与改进|r",
     ["All"] = "全部",
     ["Bad player"] = "菜",
     ["Quitter"] = "跳车",

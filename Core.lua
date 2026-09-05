@@ -53,8 +53,17 @@ local options = {
             get = "GetShowPopup",
             width = "full"
         },
+        blacklistAnnouncement = {
+            order = 2,
+            type = 'toggle',
+            name = addon.L['Enable blacklist announcements'],
+            desc = addon.L['Announces in the party channel when a blacklisted player is detected in the group.'],
+            set = "SetBlacklistAnnouncement",
+            get = "GetBlacklistAnnouncement",
+            width = "full"
+        },
         lockWindows = {
-            order = 4,
+            order = 3,
             type = 'toggle',
             name = addon.L['Lock windows'],
             desc = addon.L['Locks the addon\'s windows, preventing them from moving.'],
@@ -63,7 +72,7 @@ local options = {
             width = "full"
         },
         minimapIcon = {
-            order = 6,
+            order = 4,
             type = 'toggle',
             name = addon.L['Toggle minimap icon'],
             desc = addon.L['Toggles the minimap icon.'],
@@ -72,7 +81,7 @@ local options = {
             width = "full"
         },
         leaverText = {
-            order = 8,
+            order = 5,
             type = 'toggle',
             name = addon.L['Toggle leaver messages'],
             desc = addon.L['Toggles a chat message when other players leave the group, which provides a link you can right click to make it easier to add leavers.'],
@@ -80,30 +89,22 @@ local options = {
             get = "GetLeaverText",
             width = "full"
         },
-        spacer1 = {
-            order = 2,
-            type = "description",
-            name = "\n\n\n\n",
-        },
-        spacer2 = {
-            order = 5,
-            type = "description",
-            name = "\n\n\n\n",
-        },
-        spacer3 = {
-            order = 7,
-            type = "description",
-            name = "\n\n\n\n",
-        },
         headerCredits = {
             order = 11,
             type = "header",
             name = addon.L["Credits"],
         },
-        creditsDescription = {
+        creditsDescription1 = {
             order = 12,
             type = "description",
             name = addon.L["|cffF58CBADiuxtros|r @ Icecrown (US) - |cffFF8000Author|r"],
+            width = "full"
+        },
+        creditsDescription2 = {
+            order = 13,
+            type = "description",
+            name = addon.L["|cff3FC7EBMascascora|r @ 迦拉克隆 (CN) - |cffFF8000Chinese localization|r"],
+            width = "full"
         },
     },
 }
@@ -126,6 +127,7 @@ local defaults = {
     },
     profile = {
         showPopup = true,
+        blacklistAnnouncement = true,
         minimap = {
             hide = false,
         },
@@ -262,12 +264,18 @@ function BlacklistWarden:CheckPlayersOnGroupUpdate()
             local fullname = name .. "-" .. realm;
             local classBase, classId = UnitClassBase(unitID)
             newMembers[fullname] = classId
-            --check only if someone joined
-            if groupCount > BlacklistWarden.db.global.previousGroupSize then
-                if BlacklistWarden:IsPlayerInList(fullname) and not acknowledgedBlacklistPlayers[fullname:lower()] then
+            -- Check only newly seen members. This also handles a member swap
+            -- where the group size does not change, and joining an existing group.
+            if not previousMembers[fullname] then
+                local blacklistedPlayer = BlacklistWarden.db.global.blacklistedPlayers[fullname:lower()]
+                if blacklistedPlayer and BlacklistWarden.db.profile.blacklistAnnouncement then
+                    SendChatMessage(addon.L["Detected blacklisted member "] .. fullname ..
+                        addon.L[", blacklist reason: "] ..
+                        (blacklistedPlayer.reason or addon.L["Not specified"]), "PARTY")
+                end
+                if blacklistedPlayer and not acknowledgedBlacklistPlayers[fullname:lower()] then
                     if blacklistPopupWarning then
-                        blacklistPopupWarning.setPlayerData(BlacklistWarden.db.global
-                            .blacklistedPlayers[fullname:lower()])
+                        blacklistPopupWarning.setPlayerData(blacklistedPlayer)
                         blacklistPopupWarning:Show()
                     end
                 end
@@ -315,6 +323,14 @@ end
 
 function BlacklistWarden:SetShowPopup(info, value)
     BlacklistWarden.db.profile.showPopup = value;
+end
+
+function BlacklistWarden:GetBlacklistAnnouncement(info)
+    return BlacklistWarden.db.profile.blacklistAnnouncement;
+end
+
+function BlacklistWarden:SetBlacklistAnnouncement(info, value)
+    BlacklistWarden.db.profile.blacklistAnnouncement = value;
 end
 
 function BlacklistWarden:GetLeaverText(info)
